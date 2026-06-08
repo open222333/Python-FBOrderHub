@@ -139,6 +139,30 @@ def update_product(product_id):
     if 'status' in data and data['status'] not in VALID_STATUSES:
         return jsonify({'success': False, 'message': 'status 須為 listed 或 unlisted'}), 400
 
+    if 'name' in data:
+        name_val = str(data['name']).strip()
+        if not name_val:
+            return jsonify({'success': False, 'message': '產品名稱不得為空'}), 400
+        data['name'] = name_val
+
+    if 'price' in data:
+        try:
+            price_val = float(data['price'])
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'message': '價格格式錯誤'}), 400
+        if price_val < 0:
+            return jsonify({'success': False, 'message': '價格不得為負值'}), 400
+        data['price'] = price_val
+
+    if 'stock' in data:
+        try:
+            stock_val = int(data['stock'])
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'message': '庫存格式錯誤'}), 400
+        if stock_val < 0:
+            return jsonify({'success': False, 'message': '庫存不得為負值'}), 400
+        data['stock'] = stock_val
+
     for field in ('name', 'description', 'price', 'stock', 'images', 'status'):
         if field in data:
             kwargs[field] = data[field]

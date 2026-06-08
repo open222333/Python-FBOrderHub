@@ -1,3 +1,4 @@
+import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from src.models.order import Order, ORDER_STATUSES
@@ -128,7 +129,8 @@ def submit_order():
         )
     except Exception:
         for d in validated_items:
-            Product.restore_stock(d['product_id'], d['quantity'])
+            if not Product.restore_stock(d['product_id'], d['quantity']):
+                logging.error('restore_stock failed: product=%s qty=%s', d['product_id'], d['quantity'])
         return jsonify({'success': False, 'message': '建立訂單失敗，請稍後再試'}), 500
 
     return jsonify({'success': True, 'id': oid}), 201
@@ -155,6 +157,8 @@ def list_orders():
         description: 成功
     """
     status = request.args.get('status')
+    if status and status not in ORDER_STATUSES:
+        return jsonify({'success': False, 'message': f'status 須為 {ORDER_STATUSES}'}), 400
     return jsonify({'success': True, 'data': Order.find_all(status)})
 
 

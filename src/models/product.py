@@ -20,8 +20,7 @@ class Product(BaseModel):
 
     @classmethod
     def find_listed(cls) -> list:
-        """顧客下單用：自動下架到期產品後回傳上架清單"""
-        cls.auto_unpublish()
+        """顧客下單用：回傳上架清單（排程器負責自動下架，不在此重複寫入）"""
         return [cls._serialize(d) for d in cls._col().find({'status': 'listed'}).sort('created_at', -1)]
 
     @classmethod
