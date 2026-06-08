@@ -22,9 +22,12 @@ export default defineConfig({
     port: 5173,
     // 開發時將 API 請求代理到 Flask（port 5000）
     proxy: {
-      '/auth': { target: 'http://localhost:5000', changeOrigin: true },
-      '/user': { target: 'http://localhost:5000', changeOrigin: true },
-      '/log':  { target: 'http://localhost:5000', changeOrigin: true },
+      '/auth':    { target: 'http://localhost:5000', changeOrigin: true },
+      '/user':    { target: 'http://localhost:5000', changeOrigin: true },
+      '/log':     { target: 'http://localhost:5000', changeOrigin: true },
+      '/product': { target: 'http://localhost:5000', changeOrigin: true },
+      '/fb':      { target: 'http://localhost:5000', changeOrigin: true },
+      '/order':   { target: 'http://localhost:5000', changeOrigin: true },
     },
   },
 })

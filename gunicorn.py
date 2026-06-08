@@ -48,3 +48,10 @@ loglevel  = _s('LOG_LEVEL',  'info')
 # ── Misc ──────────────────────────────────────────────────────
 preload_app = _b('PRELOAD_APP', True)   # fork 前預先載入 app，節省記憶體
 reload      = _b('RELOAD',     False)  # 僅開發環境設為 true
+
+
+# ── Hooks ─────────────────────────────────────────────────────
+def post_fork(server, worker):
+    """Worker fork 後在各自的程序內啟動排程器，避免 master 程序持有背景執行緒。"""
+    from src.scheduler import start as start_scheduler
+    start_scheduler()

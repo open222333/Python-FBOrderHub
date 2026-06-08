@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 const router = createRouter({
   history: createWebHistory('/admin/'),
   routes: [
-    { path: '/', redirect: '/users' },
+    { path: '/', redirect: '/products' },
 
     {
       path: '/login',
@@ -13,11 +13,25 @@ const router = createRouter({
     },
 
     {
-      // 需登入的頁面共用 DashboardLayout
       path: '/',
       component: () => import('@/layouts/DashboardLayout.vue'),
       meta: { requiresAuth: true },
       children: [
+        {
+          path: 'products',
+          name: 'products',
+          component: () => import('@/views/ProductsView.vue'),
+        },
+        {
+          path: 'fb',
+          name: 'fb',
+          component: () => import('@/views/FBPostView.vue'),
+        },
+        {
+          path: 'orders',
+          name: 'orders',
+          component: () => import('@/views/OrdersView.vue'),
+        },
         {
           path: 'users',
           name: 'users',
@@ -42,13 +56,8 @@ const router = createRouter({
 router.beforeEach((to) => {
   const auth = useAuthStore()
 
-  // 尚未登入 → 導向登入頁
   if (to.meta.requiresAuth && !auth.isLoggedIn) return '/login'
-
-  // 已登入卻訪問 guest-only 頁面 → 首頁
   if (to.meta.guest && auth.isLoggedIn) return '/'
-
-  // 需要 admin 但不是 admin → 操作紀錄（最低權限頁）
   if (to.meta.requiresAdmin && !auth.isAdmin) return '/logs'
 })
 

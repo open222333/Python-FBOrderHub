@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>線上訂購</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    body { background: #f8f9fa; }
+    .product-card { transition: box-shadow .15s, transform .1s; cursor: default; }
+    .product-card:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important; transform: translateY(-2px); }
+    .product-img { width:100%; height:180px; object-fit:cover; }
+    .product-img-placeholder { width:100%; height:180px; background:#e9ecef;
+      display:flex; align-items:center; justify-content:center; font-size:2rem; color:#adb5bd; }
+    .qty-btn { width:32px; height:32px; }
+    .cart-badge { font-size:.65rem; top:-4px; right:-6px; }
+    .success-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5);
+      display:flex; align-items:center; justify-content:center; z-index:9999; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-light bg-white shadow-sm px-3 mb-4">
+  <span class="navbar-brand fw-bold"><i class="bi bi-shop me-2 text-primary"></i>線上訂購</span>
+  <button class="btn btn-outline-primary position-relative" id="cartBtn">
+    <i class="bi bi-cart3"></i>
+    <span class="badge bg-danger position-absolute cart-badge" id="cartCount" style="display:none">0</span>
+  </button>
+</nav>
+
+<div class="container pb-5">
+
+  <!-- 載入中 -->
+  <div id="loadingState" class="text-center py-5 text-muted">
+    <span class="spinner-border me-2"></span>載入商品中...
+  </div>
+
+  <!-- 無商品 -->
+  <div id="emptyState" class="text-center py-5 text-muted d-none">
+    <i class="bi bi-inbox fs-1 d-block mb-3"></i>目前沒有上架商品
+  </div>
+
+  <!-- 商品列表 -->
+  <div id="productsGrid" class="row g-3 d-none"></div>
+
+  <!-- 購物車 / 訂單表單 -->
+  <div id="cartSection" class="d-none mt-5">
+    <h5 class="fw-bold mb-3"><i class="bi bi-cart3 me-2"></i>購物車</h5>
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-0">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>商品</th><th class="text-center">數量</th><th class="text-end">小計</th><th></th></tr>
+          </thead>
+          <tbody id="cartItems"></tbody>
+          <tfoot>
+            <tr class="fw-bold">
+              <td colspan="2">合計</td>
+              <td class="text-end text-danger" id="cartTotal"></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- 顧客資料 -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header fw-semibold">訂購人資料</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">姓名 <span class="text-danger">*</span></label>
+            <input type="text" id="customerName" class="form-control" placeholder="請輸入姓名" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">電話 <span class="text-danger">*</span></label>
+            <input type="tel" id="customerPhone" class="form-control" placeholder="請輸入聯絡電話" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">備註</label>
+            <textarea id="customerNote" class="form-control" rows="2" placeholder="特殊需求或備注"></textarea>
+          </div>
+        </div>
+        <div id="orderError" class="alert alert-danger mt-3 d-none"></div>
+        <div class="mt-3 text-end">
+          <button class="btn btn-primary btn-lg" id="submitBtn" onclick="submitOrder()">
+            <i class="bi bi-check2-circle me-2"></i>確認送出訂單
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 成功提示 -->
+<div id="successOverlay" class="success-overlay d-none">
+  <div class="card border-0 shadow-lg p-4 text-center" style="max-width:360px">
+    <i class="bi bi-check-circle-fill text-success" style="font-size:3rem"></i>
+    <h5 class="mt-3 fw-bold">訂單已送出！</h5>
+    <p class="text-muted mb-3">感謝您的訂購，我們將盡快與您聯繫確認。</p>
+    <button class="btn btn-primary" onclick="resetOrder()">繼續購物</button>
+  </div>
+</div>
+
+<script>
+const API = '/order/public'
+let products = []
+let cart     = {}  // { productId: quantity }
+
+async function init() {
+  const res = await fetch(`${API}/products`)
+  const data = await res.json()
+  document.getElementById('loadingState').classList.add('d-none')
+  if (!data.success || !data.data.length) {
+    document.getElementById('emptyState').classList.remove('d-none')
+    return
+  }
+  products = data.data
+  renderProducts()
+  document.getElementById('productsGrid').classList.remove('d-none')
+}
+
+function renderProducts() {
+  const grid = document.getElementById('productsGrid')
+  grid.innerHTML = products.map(p => `
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 product-card">
+        ${p.images?.length
+          ? `<img src="${escHtml(p.images[0])}" class="product-img rounded-top" />`
+          : `<div class="product-img-placeholder rounded-top"><i class="bi bi-image"></i></div>`}
+        <div class="card-body d-flex flex-column">
+          <h6 class="fw-bold mb-1">${escHtml(p.name)}</h6>
+          <p class="text-muted small flex-grow-1 mb-2" style="font-size:.8rem">${escHtml(p.description||'')}</p>
+          <div class="d-flex align-items-center justify-content-between mt-auto">
+            <span class="fw-bold text-danger">NT$ ${Number(p.price).toLocaleString()}</span>
+            <span class="text-muted small">庫存 ${p.stock}</span>
+          </div>
+          <div class="mt-2">
+            ${p.stock > 0
+              ? `<button class="btn btn-primary btn-sm w-100" onclick="addToCart('${p._id}')">
+                   <i class="bi bi-cart-plus me-1"></i>加入購物車
+                 </button>`
+              : `<button class="btn btn-secondary btn-sm w-100" disabled>已售罄</button>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('')
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+function addToCart(id) {
+  cart[id] = (cart[id] || 0) + 1
+  updateCartUI()
+  document.getElementById('cartSection').classList.remove('d-none')
+  document.getElementById('cartSection').scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function updateCartUI() {
+  const count = Object.values(cart).reduce((s,q) => s+q, 0)
+  const badge = document.getElementById('cartCount')
+  if (count > 0) { badge.textContent = count; badge.style.display = '' }
+  else badge.style.display = 'none'
+
+  const tbody = document.getElementById('cartItems')
+  let total = 0
+  tbody.innerHTML = Object.entries(cart).map(([id, qty]) => {
+    const p = products.find(x => x._id === id)
+    if (!p) return ''
+    const sub = p.price * qty
+    total += sub
+    return `
+      <tr>
+        <td>${escHtml(p.name)}</td>
+        <td class="text-center">
+          <div class="d-flex align-items-center justify-content-center gap-1">
+            <button class="btn btn-outline-secondary btn-sm qty-btn" onclick="changeQty('${id}',-1)">−</button>
+            <span class="px-2">${qty}</span>
+            <button class="btn btn-outline-secondary btn-sm qty-btn" onclick="changeQty('${id}',1)">+</button>
+          </div>
+        </td>
+        <td class="text-end">NT$ ${Number(sub).toLocaleString()}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart('${id}')">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>`
+  }).join('')
+  document.getElementById('cartTotal').textContent = `NT$ ${Number(total).toLocaleString()}`
+}
+
+function changeQty(id, delta) {
+  cart[id] = Math.max(0, (cart[id]||0) + delta)
+  if (cart[id] === 0) delete cart[id]
+  if (!Object.keys(cart).length) document.getElementById('cartSection').classList.add('d-none')
+  updateCartUI()
+}
+
+function removeFromCart(id) {
+  delete cart[id]
+  if (!Object.keys(cart).length) document.getElementById('cartSection').classList.add('d-none')
+  updateCartUI()
+}
+
+document.getElementById('cartBtn').addEventListener('click', () => {
+  if (Object.keys(cart).length) {
+    document.getElementById('cartSection').scrollIntoView({ behavior: 'smooth' })
+  }
+})
+
+async function submitOrder() {
+  const name  = document.getElementById('customerName').value.trim()
+  const phone = document.getElementById('customerPhone').value.trim()
+  const note  = document.getElementById('customerNote').value.trim()
+  const errEl = document.getElementById('orderError')
+
+  if (!name || !phone) {
+    errEl.textContent = '請填寫姓名與電話'; errEl.classList.remove('d-none'); return
+  }
+  if (!Object.keys(cart).length) {
+    errEl.textContent = '購物車為空'; errEl.classList.remove('d-none'); return
+  }
+  errEl.classList.add('d-none')
+
+  const items = Object.entries(cart).map(([id, qty]) => {
+    const p = products.find(x => x._id === id)
+    return { product_id: id, product_name: p.name, price: p.price, quantity: qty }
+  })
+
+  const btn = document.getElementById('submitBtn')
+  btn.disabled = true
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>送出中...'
+
+  const res  = await fetch(`${API}/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customer_name: name, customer_phone: phone, note, items }),
+  })
+  const data = await res.json()
+
+  btn.disabled = false
+  btn.innerHTML = '<i class="bi bi-check2-circle me-2"></i>確認送出訂單'
+
+  if (data.success) {
+    document.getElementById('successOverlay').classList.remove('d-none')
+  } else {
+    errEl.textContent = data.message || '送出失敗，請稍後再試'
+    errEl.classList.remove('d-none')
+  }
+}
+
+function resetOrder() {
+  cart = {}
+  document.getElementById('customerName').value = ''
+  document.getElementById('customerPhone').value = ''
+  document.getElementById('customerNote').value = ''
+  document.getElementById('cartSection').classList.add('d-none')
+  document.getElementById('successOverlay').classList.add('d-none')
+  updateCartUI()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+init()
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

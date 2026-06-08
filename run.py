@@ -51,5 +51,12 @@ else:
         )
         print(f'[init] 已修正 admin 帳號資料：{list(needs_update.keys())}')
 
+import os
+# debug=True 時 Werkzeug 會 fork 出子程序並設 WERKZEUG_RUN_MAIN=true
+# 只在子程序（實際處理請求的 worker）啟動排程，避免父程序（檔案監聽器）重複啟動
+if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+    from src.scheduler import start as start_scheduler
+    start_scheduler()
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=FLASK_PORT, debug=True)

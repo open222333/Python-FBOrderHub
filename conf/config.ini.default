@@ -41,6 +41,16 @@ MYSQL_PASSWORD=
 ; MySQL 資料庫名稱 預設 flask_app
 MYSQL_DB=flask_app
 
+[FACEBOOK]
+; Facebook Graph API 使用者存取權杖（需 groups_manage_posts 權限）
+; FB_ACCESS_TOKEN=
+
+; 目標社團 ID
+; FB_GROUP_ID=
+
+; Graph API 版本，預設 v18.0
+; FB_API_VERSION=v18.0
+
 [REDIS]
 ; Redis 主機 預設 localhost
 REDIS_HOST=localhost

@@ -40,6 +40,17 @@
           </button>
         </div>
 
+        <div class="nav-section">商品管理</div>
+        <RouterLink class="nav-link" to="/products" @click="sidebarOpen = false">
+          <i class="bi bi-box-seam"></i>產品庫存
+        </RouterLink>
+        <RouterLink class="nav-link" to="/orders" @click="sidebarOpen = false">
+          <i class="bi bi-receipt"></i>訂單管理
+        </RouterLink>
+        <RouterLink class="nav-link" to="/fb" @click="sidebarOpen = false">
+          <i class="bi bi-facebook"></i>FB 發文
+        </RouterLink>
+
         <div class="nav-section">管理</div>
         <RouterLink v-if="auth.isAdmin"
           class="nav-link" to="/users" @click="sidebarOpen = false">
@@ -53,6 +64,9 @@
         <RouterLink class="nav-link" to="/settings" @click="sidebarOpen = false">
           <i class="bi bi-palette"></i>系統設定
         </RouterLink>
+        <a class="nav-link" href="/shop/" target="_blank" @click="sidebarOpen = false">
+          <i class="bi bi-shop"></i>顧客下單頁 <i class="bi bi-box-arrow-up-right ms-1" style="font-size:.7rem"></i>
+        </a>
 
         <div class="sidebar-footer">
           <i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem"></i>

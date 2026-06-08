@@ -7,6 +7,10 @@ from app.user.view import app_user
 from app.admin.view import app_admin
 from app.log.view import app_log
 from app.docs.view import app_docs
+from app.product.view import app_product
+from app.fb.view import app_fb
+from app.order.view import app_order
+from app.shop.view import app_shop
 from src import FLASK_JSON_PATH
 import json
 
@@ -53,12 +57,16 @@ def status():
 
 
 def create_app(confgi_object=None):
-    app.register_blueprint(blueprint=app_sample, url_prefix='/sample')
-    app.register_blueprint(blueprint=app_auth, url_prefix='/auth')
-    app.register_blueprint(blueprint=app_user, url_prefix='/user')
-    app.register_blueprint(blueprint=app_admin, url_prefix='/admin')
-    app.register_blueprint(blueprint=app_log, url_prefix='/log')
-    app.register_blueprint(blueprint=app_docs, url_prefix='/docs')
+    app.register_blueprint(blueprint=app_sample,  url_prefix='/sample')
+    app.register_blueprint(blueprint=app_auth,    url_prefix='/auth')
+    app.register_blueprint(blueprint=app_user,    url_prefix='/user')
+    app.register_blueprint(blueprint=app_admin,   url_prefix='/admin')
+    app.register_blueprint(blueprint=app_log,     url_prefix='/log')
+    app.register_blueprint(blueprint=app_docs,    url_prefix='/docs')
+    app.register_blueprint(blueprint=app_product, url_prefix='/product')
+    app.register_blueprint(blueprint=app_fb,      url_prefix='/fb')
+    app.register_blueprint(blueprint=app_order,   url_prefix='/order')
+    app.register_blueprint(blueprint=app_shop,    url_prefix='/shop')
     if confgi_object:
         app.config.from_object(confgi_object)
     return app

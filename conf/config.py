@@ -25,7 +25,7 @@ class DevelopmentConfig(BasicConfig):
 
 
 class TestingConfig(BasicConfig):
-    TESTING      = False,
-    DEBUG        = False,
+    TESTING      = False
+    DEBUG        = False
     DB_SERVER    = 'localhost'
     DATABASE_URI = 'sqlite:///:memory:'

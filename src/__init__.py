@@ -53,3 +53,8 @@ REDIS_HOST = config.get('REDIS', 'REDIS_HOST', fallback='localhost')
 REDIS_PORT = config.getint('REDIS', 'REDIS_PORT', fallback=6379)
 REDIS_PASSWORD = config.get('REDIS', 'REDIS_PASSWORD', fallback='')
 REDIS_DB = config.getint('REDIS', 'REDIS_DB', fallback=0)
+
+# Facebook 連線參數
+FB_ACCESS_TOKEN = config.get('FACEBOOK', 'FB_ACCESS_TOKEN', fallback='')
+FB_GROUP_ID     = config.get('FACEBOOK', 'FB_GROUP_ID',     fallback='')
+FB_API_VERSION  = config.get('FACEBOOK', 'FB_API_VERSION',  fallback='v18.0')
